@@ -42,7 +42,9 @@ class GetHoliday(object):
                         "lunarMonth", "lunarYear", "oDate", "suit", "term", "type", "value"], axis=1, inplace=True)
         df["date"] = df[["day", "month", "year"]].apply(lambda x: format_date(x), axis=1)
         df["desc"].fillna("-", inplace=True)
-        df["status"].fillna(0, inplace=True)
+        df["status"].fillna("-", inplace=True)
+        df["status"] = df[["cnDay", "status"]].apply(
+            lambda x: x[1] if x[1] != "-" else 3 if x[0] in ("六", "日") else 0, axis=1)
         df.drop_duplicates(inplace=True)
         return df
 
@@ -68,8 +70,3 @@ class GetHoliday(object):
         oday = df[df["status"] != "1"]
         oday.reset_index(inplace=True)
         return oday
-
-
-if __name__ == '__main__':
-    a = GetHoliday()
-    print(a.today_holiday())
