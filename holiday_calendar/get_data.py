@@ -9,10 +9,6 @@
 
 import time
 
-import pandas as pd
-
-import requests
-
 
 def format_date(x):
     day = str(int(x[0])) if int(x[0]) > 9 else f"0{str(x[0])}"
@@ -22,22 +18,25 @@ def format_date(x):
 
 
 class GetHoliday(object):
-    def __init__(self):
-        self.year = time.strftime("%Y")
+    def __init__(self, year=None):
+        self.cyear = time.strftime("%Y") if not year else year
         self.month = int(time.strftime("%m"))
         self.host = "https://sp0.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php?"
         self.params = [
             "resource_id=39043",
             "tn=wisetpl",
         ]
+        self.df = self.get_year_source()
 
     def get_year_source(self, year=None):
-        year = year if year else self.year
+        import requests
+        year = year if year else self.cyear
         data = []
         for i in (2, 5, 8, 11):
             rdata = requests.get(f"{self.host}query={year}年{i}月&" + "&".join(self.params)).text
             datai = eval(rdata)["data"][0]["almanac"]
             data += datai
+        import pandas as pd
         df = pd.DataFrame(data)
         df.drop(labels=["animal", "avoid", "gzDate", "gzMonth", "gzYear", "isBigMonth", "lunarDate",
                         "lunarMonth", "lunarYear", "oDate", "suit", "term", "type", "value"], axis=1, inplace=True)
@@ -48,24 +47,24 @@ class GetHoliday(object):
         return df
 
     def today_holiday(self):
-        df = self.get_year_source()
+        df = self.df
         status = df[df["date"] == time.strftime("%Y-%m-%d")]["status"]
         flag = int(status)
         return flag
 
     def anyday_holiday(self, date):
-        df = self.get_year_source()
+        df = self.df
         status = df[df["date"] == date]["status"]
         flag = int(status)
         return flag
 
     def get_holidays(self):
-        df = self.get_year_source()
+        df = self.df
         date_list = df[df["status"] == "1"]["date"].tolist()
         return date_list
 
     def get_workday(self):
-        df = self.get_year_source()
+        df = self.df
         oday = df[df["status"] != "1"]
         oday.reset_index(inplace=True)
         return oday
@@ -73,5 +72,4 @@ class GetHoliday(object):
 
 if __name__ == '__main__':
     a = GetHoliday()
-    b = a.get_workday()
-    print(b)
+    print(a.today_holiday())
