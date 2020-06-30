@@ -2,4 +2,5 @@
 holiday_calendar.egg-info
 tes.py
 dist
-__pycache__/*
+holiday_calendar/__pycache__/
+*.pyc
